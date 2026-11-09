@@ -1,0 +1,30 @@
+[package]
+name = "clack"
+version = "0.1.0"
+edition = "2021"
+description = "Mechanical keyboard sound emulator"
+license = "MIT"
+repository = "https://github.com/ashrafpy/clack"
+readme = "README.md"
+
+[dependencies]
+kira = "0.12"
+crossbeam-channel = "0.5"
+clap = { version = "4", features = ["derive"] }
+log = "0.4"
+env_logger = "0.11"
+rand = "0.9"
+include_dir = "0.7"
+ctrlc = "3"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+evdev = "0.12"
+
+[target.'cfg(not(target_os = "linux"))'.dependencies]
+rdev = "0.5"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1
