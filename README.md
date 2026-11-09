@@ -11,9 +11,19 @@ A lightweight, cross-platform mechanical keyboard sound emulator. Clack runs in 
 
 ## Installation
 
-### Quick Install (Linux & macOS)
+### Linux, macOS & Windows (Git Bash)
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ashrafpy/clack/main/install.sh | sh
+```
+
+### Windows (PowerShell)
+```powershell
+irm https://raw.githubusercontent.com/ashrafpy/clack/main/install.ps1 | iex
+```
+
+### Windows (CMD / curl)
+```cmd
+curl.exe -fsSL https://raw.githubusercontent.com/ashrafpy/clack/main/install.ps1 | powershell -NoProfile -Command -
 ```
 
 ### Build from Source
@@ -21,7 +31,7 @@ curl -fsSL https://raw.githubusercontent.com/ashrafpy/clack/main/install.sh | sh
 git clone https://github.com/ashrafpy/clack.git
 cd clack
 cargo build --release
-# Binary at target/release/clack
+# Binary at target/release/clack (or target/release/clack.exe on Windows)
 ```
 
 ## Usage

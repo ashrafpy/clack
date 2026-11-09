@@ -54,6 +54,8 @@ case "$OS" in
                 exit 1
                 ;;
         esac
+        BINARY_NAME="clack"
+        ARCHIVE_EXT="tar.gz"
         ;;
     Darwin)
         case "$ARCH" in
@@ -68,14 +70,29 @@ case "$OS" in
                 exit 1
                 ;;
         esac
+        BINARY_NAME="clack"
+        ARCHIVE_EXT="tar.gz"
+        ;;
+    MINGW*|MSYS*|CYGWIN*)
+        case "$ARCH" in
+            x86_64|amd64)
+                TARGET="x86_64-pc-windows-msvc"
+                ;;
+            *)
+                error "Unsupported Windows architecture: $ARCH"
+                exit 1
+                ;;
+        esac
+        BINARY_NAME="clack.exe"
+        ARCHIVE_EXT="zip"
         ;;
     *)
-        error "Unsupported operating system: $OS. Clack installer currently supports Linux and macOS."
+        error "Unsupported operating system: $OS. Clack installer currently supports Linux, macOS, and Windows (Git Bash/MSYS2/Cygwin)."
         exit 1
         ;;
 esac
 
-RELEASE_URL="https://github.com/ashrafpy/clack/releases/latest/download/clack-${TARGET}.tar.gz"
+RELEASE_URL="https://github.com/ashrafpy/clack/releases/latest/download/clack-${TARGET}.${ARCHIVE_EXT}"
 
 download() {
     url="$1"
@@ -96,29 +113,42 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-TAR_FILE="$TMP_DIR/clack.tar.gz"
+ARCHIVE_FILE="$TMP_DIR/clack.${ARCHIVE_EXT}"
 info "Downloading Clack for ${TARGET}..."
-download "$RELEASE_URL" "$TAR_FILE"
+download "$RELEASE_URL" "$ARCHIVE_FILE"
 
 info "Extracting archive..."
-tar -xzf "$TAR_FILE" -C "$TMP_DIR"
-
-if [ -f "$TMP_DIR/clack" ]; then
-    SRC_BINARY="$TMP_DIR/clack"
+if [ "$ARCHIVE_EXT" = "zip" ]; then
+    if command -v unzip >/dev/null 2>&1; then
+        unzip -q "$ARCHIVE_FILE" -d "$TMP_DIR"
+    elif command -v tar >/dev/null 2>&1 && tar -tf "$ARCHIVE_FILE" >/dev/null 2>&1; then
+        tar -xf "$ARCHIVE_FILE" -C "$TMP_DIR"
+    elif command -v powershell.exe >/dev/null 2>&1; then
+        powershell.exe -NoProfile -Command "Expand-Archive -Path '$ARCHIVE_FILE' -DestinationPath '$TMP_DIR' -Force"
+    else
+        error "No zip extraction tool found (unzip, tar, or powershell.exe required)."
+        exit 1
+    fi
 else
-    SRC_BINARY="$(find "$TMP_DIR" -type f -name clack | head -n 1)"
+    tar -xzf "$ARCHIVE_FILE" -C "$TMP_DIR"
+fi
+
+if [ -f "$TMP_DIR/$BINARY_NAME" ]; then
+    SRC_BINARY="$TMP_DIR/$BINARY_NAME"
+else
+    SRC_BINARY="$(find "$TMP_DIR" -type f -name "$BINARY_NAME" | head -n 1)"
 fi
 
 if [ -z "$SRC_BINARY" ] || [ ! -f "$SRC_BINARY" ]; then
-    error "Failed to locate clack binary in the downloaded archive."
+    error "Failed to locate $BINARY_NAME in the downloaded archive."
     exit 1
 fi
 
 INSTALL_DIR="${HOME}/.local/bin"
 mkdir -p "$INSTALL_DIR"
-cp "$SRC_BINARY" "$INSTALL_DIR/clack"
-chmod +x "$INSTALL_DIR/clack"
-success "Installed clack binary to ${INSTALL_DIR}/clack"
+cp "$SRC_BINARY" "$INSTALL_DIR/$BINARY_NAME"
+chmod +x "$INSTALL_DIR/$BINARY_NAME"
+success "Installed $BINARY_NAME to ${INSTALL_DIR}/$BINARY_NAME"
 
 # Verify PATH
 case ":$PATH:" in
